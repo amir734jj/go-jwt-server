@@ -8,6 +8,7 @@ import (
 type Session struct {
 	gorm.Model
 	Id      uint `gorm:"primaryKey"`
-	Expired time.Time
+	Token   string
+	Expires time.Time
 	UserId  uint
 }

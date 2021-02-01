@@ -5,31 +5,33 @@ import (
 	"go-jwt-server/types"
 )
 
-func FindSession(db types.DatabaseT, id uint) models.Session {
+func QuerySession(db *types.DatabaseT, table *map[string]interface{}) (u *models.Session, err error) {
+	var session = models.Session{}
 
-	var session models.Session
-	db.First(id, &session)
+	result := db.Where(*table).First(&session)
 
-	return session
+	return &session, result.Error
 }
 
-func AddSession(db types.DatabaseT, session models.Session) models.Session {
+func AddSession(db *types.DatabaseT, session *models.Session) *models.Session {
 	db.Create(&session)
 
 	return session
 }
 
-func UpdateSession(db types.DatabaseT, id uint, session models.Session) models.Session {
-	db.Model(id).Updates("Name")
+func DeleteSessions(db *types.DatabaseT, userId uint) (sessions []models.Session, err error) {
+	cond := map[string]interface{}{
+		"user_id": userId,
+	}
+	sessions = make([]models.Session, 10)
+	db.Find(&sessions, cond)
 
-	return session
-}
+	ids := make([]uint, 10)
+	for _, session := range sessions {
+		ids = append(ids, session.Id)
+	}
 
-func DeleteSession(db types.DatabaseT, id uint) models.Session {
-	var session models.Session
-	db.First(&session)
+	result := db.Delete(&sessions, ids)
 
-	db.Delete(id)
-
-	return session
+	return sessions, result.Error
 }

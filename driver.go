@@ -35,9 +35,21 @@ func main() {
 	}
 
 	mux := goji.NewMux()
-	mux.HandleFunc(pat.Post("/register"), logic.Register)
-	mux.HandleFunc(pat.Post("/login"), logic.Login)
-	mux.HandleFunc(pat.Post("/logout"), logic.Logout)
 
-	_ = http.ListenAndServe("localhost:8000", mux)
+	authSub := goji.SubMux()
+	authSub.HandleFunc(pat.Post("/register"), logic.Register)
+	authSub.HandleFunc(pat.Post("/login"), logic.Login)
+	authSub.HandleFunc(pat.Get("/logout"), logic.Logout)
+	mux.Handle(pat.New("/authorize/*"), authSub)
+
+	apiSub := goji.SubMux()
+	apiSub.Use(logic.AuthorizeMiddleware)
+	apiSub.HandleFunc(pat.Get("/amir"), logic.AuthorizedApi)
+	mux.Handle(pat.New("/api/*"), apiSub)
+
+	err = http.ListenAndServe("localhost:8000", mux)
+
+	if err != nil {
+		panic(err)
+	}
 }

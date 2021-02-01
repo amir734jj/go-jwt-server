@@ -9,5 +9,6 @@ type User struct {
 	Username string
 	Password string
 	Realm    string
+	Email    string
 	Sessions []Session `gorm:"foreignKey:UserId"`
 }
