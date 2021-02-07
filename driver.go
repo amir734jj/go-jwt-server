@@ -40,11 +40,11 @@ func main() {
 	authSub.HandleFunc(pat.Post("/register"), logic.Register)
 	authSub.HandleFunc(pat.Post("/login"), logic.Login)
 	authSub.HandleFunc(pat.Get("/logout"), logic.Logout)
-	mux.Handle(pat.New("/authorize/*"), authSub)
+	mux.Handle(pat.New("/account/*"), authSub)
 
 	apiSub := goji.SubMux()
 	apiSub.Use(logic.AuthorizeMiddleware)
-	apiSub.HandleFunc(pat.Get("/amir"), logic.AuthorizedApi)
+	apiSub.HandleFunc(pat.Get("/"), logic.AuthorizedApi)
 	mux.Handle(pat.New("/api/*"), apiSub)
 
 	err = http.ListenAndServe("localhost:8000", mux)

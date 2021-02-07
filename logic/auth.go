@@ -101,7 +101,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		http.Error(w, "Failed decoding find the token", 401)
+		http.Error(w, "Failed finding the bearer token", 401)
 		return
 	}
 
@@ -156,14 +156,23 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := models.User{
+	_, err = dal.QueryUser(db, &map[string]interface{}{
+		"username": registerViewModel.Username,
+	})
+
+	if err == nil {
+		http.Error(w, "Duplicate username is not allowed", 400)
+		return
+	}
+
+	user := &models.User{
 		Name:     registerViewModel.Name,
 		Realm:    registerViewModel.Realm,
 		Email:    registerViewModel.Email,
 		Username: registerViewModel.Username,
 		Password: HashPassword(registerViewModel.Password),
 	}
-	_, err = dal.AddUser(db, &user)
+	_, err = dal.AddUser(db, user)
 	if err != nil {
 		http.Error(w, "Failed adding user to database", 400)
 		return
@@ -204,6 +213,11 @@ func AuthorizeMiddleware(inner http.Handler) http.Handler {
 
 		if token == nil || token.Claims == nil || session.UserId != tokenUserId {
 			http.Error(w, "Unauthorized", 401)
+			return
+		}
+
+		if time.Now().After(session.Expires) {
+			http.Error(w, "Expired token", 401)
 			return
 		}
 
